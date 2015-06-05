@@ -1,43 +1,19 @@
 package fmp.ee;
+
 import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.fail;
 
 import java.util.ArrayList;
 import java.util.List;
 
+import fmp.ee.model.Couple;
+import fmp.ee.model.Person;
+
 import org.junit.Test;
 
 
-public class TestWeekendList
+public class WeekendListTest
 {
-  @Test
-  public void test_toChar() throws Exception {
-    assertEquals('A', Couple.toChar(1));
-    assertEquals('B', Couple.toChar(2));
-    assertEquals('M', Couple.toChar(13));
-    assertEquals('Y', Couple.toChar(25));
-    assertEquals('Z', Couple.toChar(26));
-  }
-  
-  @Test
-  public void test_toChar_fails() throws Exception {
-    toChar_fails(' ');
-    toChar_fails('a');
-    toChar_fails('z');
-    toChar_fails('4');
-    toChar_fails('%');
-  }
-  
-  private void toChar_fails(char ch) {
-    try {
-      Couple.toChar(ch);
-      fail(String.format("expected IAE not thrown for value:%s", ch));
-    }
-    catch (IllegalArgumentException e) {
-      // TODO: handle exception
-    }
-  }
-  
+
   @Test
   public void test_assignRooms_1() throws Exception {
     List<Couple> couples = createCouples(1);
@@ -183,9 +159,9 @@ public class TestWeekendList
   }
   
   private void verifyRoomAssignment(Couple couple, char hers, char his, boolean useHers) {
-    assertEquals(Character.valueOf(hers), couple.herRoom);
-    assertEquals(Character.valueOf(his), couple.hisRoom);
-    assertEquals(useHers, couple.useHerRoom);
+    assertEquals(Character.valueOf(hers), couple.getHerRoom());
+    assertEquals(Character.valueOf(his), couple.getHisRoom());
+    assertEquals(useHers, couple.useHerRoom());
   }
   
   private List<Couple> createCouples(int numCouples) {

@@ -4,10 +4,10 @@ import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.ArrayList;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
+import fmp.ee.model.Couple;
+import fmp.ee.model.Person;
 import org.apache.commons.lang3.ObjectUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.poi.hssf.usermodel.HSSFWorkbook;
@@ -212,12 +212,12 @@ public class WeekendList
       col = setCellValue(sheet, row, 1, couple.woman, false);
       setCellValue(sheet, row, col++, couple.church);
       setCellValue(sheet, row, col++, couple.engagement);
-      setCellValue(sheet, row, col++, couple.herRoom);
+      setCellValue(sheet, row, col++, couple.getHerRoom());
       row++;
       col = setCellValue(sheet, row, 1, couple.man, false);
       setCellValue(sheet, row, col++, couple.priest);
       setCellValue(sheet, row, col++, couple.wedding);
-      setCellValue(sheet, row, col++, couple.hisRoom);
+      setCellValue(sheet, row, col++, couple.getHisRoom());
       
       row += 2;
     }
@@ -452,186 +452,3 @@ public class WeekendList
   }  
 }
 
-class Person
-{
-  final String name, address, email, phone, religion;
-  final Integer age;
-
-  Person(String name, String address, String email, String phone, Integer age, String religion)
-  {
-    this.name = name;
-    this.address = address;
-    this.email = email;
-    this.phone = phone;
-    this.religion = religion;
-    this.age = age;
-  }
-
-  @Override
-  public String toString()
-  {
-    StringBuilder buf = new StringBuilder();
-    WeekendList.append(name, buf);
-    WeekendList.append(address, buf);
-    WeekendList.append(phone, buf);
-    WeekendList.append(age, buf);
-    WeekendList.append(religion, buf);
-    // ignore email
-    return WeekendList.trimmed(buf);
-  }
-}
-
-class Couple
-{
-  final Person man, woman;
-  final String church, priest, wedding, notes, engagement, dietaryRestrictions;
-  final int id;
-  Character herRoom, hisRoom;
-  Boolean useHerRoom;
-  
-  //Notes, Church, Priest, EngagementDate, WeddingDate, DietaryRestrictions
-  private static final int NUM_PARAMS = 6;
-  
-  private static final String NO_DIET_RESTRICTIONS = "None";
-  
-  Couple(int id, Person woman, Person man, String...params)
-  {
-    if (params.length != NUM_PARAMS) {
-      throw new IllegalArgumentException(String.format(
-          "unexpected number of params: expected(%d) != actual(%d)", NUM_PARAMS, params.length));
-    }
-      
-    this.id = id;
-    this.woman = woman;
-    this.man = man;
-    
-    int i = 0;
-    this.notes = params[i++];
-    this.church = params[i++];
-    this.priest = params[i++];
-    
-    this.engagement = prefix(params[i++], "E");
-    this.wedding = prefix(params[i++], "W");
-    
-    String tempRestrictions = params[i++];
-    this.dietaryRestrictions = (!NO_DIET_RESTRICTIONS.equals(tempRestrictions)) ?
-        tempRestrictions : null;
-  }
-  
-  private String prefix(String value, String prefix) {
-    return (value != null) ? String.format("%s: %s", prefix, value) : null;
-  }
-  
-  public void setUseHerRoomaAsSharing(boolean b) {
-    this.useHerRoom = b;
-  }
-  
-  public void setHerRoom(int room) {
-    this.herRoom = toChar(room);
-  }
-  
-  public void setHisRoom(int room) {
-    this.hisRoom = toChar(room);
-  }
-    
-  static char toChar(int val) {
-    int charVal = 'A' + val - 1;
-    if (!Character.isUpperCase(charVal)) {
-      throw new IllegalArgumentException(String.format(
-          "value '%d' -> [%s] is not a letter value", val, charVal));
-    }
-    return Character.toChars(charVal)[0];
-  }
-  
-  public String getRoomAssignmentString() {
-    return "Couple [id:" + id + 
-        (herRoom != null ? " hers:" + herRoom : "") +
-        (useHerRoom != null ? " sharing:" + (useHerRoom ? herRoom : hisRoom) : "") + 
-        (hisRoom != null ? " his:" + hisRoom : "");
-  }
-  
-  @Override
-  public String toString() {
-    return "Couple [id: " + id + 
-        "\n man: " + man + 
-        "\n woman: " + woman +
-        "\n church: " + church + ", priest: " + priest +
-        "\n wedding: " + wedding  + ", engagement: " + engagement +
-        "\n dietaryRestrictions: " + dietaryRestrictions +
-        "\n notes: " + notes + "]";
-  }
-}
-
-class RoomAssignments { 
-  
-  private Set<Character> assignedRooms = new HashSet<>();
-  private final List<Couple> couples;
-  
-  RoomAssignments(final List<Couple> couples) {
-    this.couples = couples;
-  }
-
-  public void assignRooms()
-  {
-//    System.out.println(String.format("assignRooms(%d)", couples.size()));
-    
-    final int switchPoint = ((couples.size() + 1) / 2);
-    int herRoom = 1;
-    int hisRoom = herRoom + switchPoint;
-    final int firstHisRoom = hisRoom;
-    
-//    System.out.println(String.format("switchPt:%d", switchPoint));
-    
-    int i = 0;
-    boolean preferFirst = true;
-    
-    for (Couple couple : couples) {
-      if (i > 0 && i % 2 == 0) {
-        herRoom++;  // increment after even iterations
-      }
-      if (i == switchPoint) {
-        hisRoom = firstHisRoom;
-      }
-      if (i >= switchPoint) {
-        preferFirst = false;  // toggle preference half way through
-      }
-      
-      couple.setHerRoom(herRoom);
-      couple.setHisRoom(hisRoom);
-      
-      char sharingRoom = chooseRoom(couple.herRoom, couple.hisRoom, preferFirst);
-      boolean useHerRoom = (couple.herRoom == sharingRoom);
-      couple.setUseHerRoomaAsSharing(useHerRoom);
-      
-//      System.out.println(couple.getRoomAssignmentString());
-      
-      hisRoom++;  // increment each iteration
-      i++;
-    }    
-  }
-  
-  protected char chooseRoom(char roomOne, char roomTwo, boolean preferFirst) {
-    char roomChoice;
-    char firstChoice = roomOne;
-    char secondChoice = roomTwo;
-    
-    if (!preferFirst) {
-      char swap = firstChoice;
-      firstChoice = secondChoice;
-      secondChoice = swap;
-    }
-    
-    if (!assignedRooms.contains(firstChoice)) {
-      roomChoice = firstChoice;
-    }
-    else if (!assignedRooms.contains(secondChoice)) {
-      roomChoice = secondChoice;
-    }
-    else {
-      throw new IllegalStateException(String.format(
-          "both rooms (%s & %s) are already assigned", firstChoice, secondChoice));
-    }
-    assignedRooms.add(roomChoice);
-    return roomChoice;
-  }
-}
