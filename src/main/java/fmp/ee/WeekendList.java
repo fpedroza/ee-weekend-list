@@ -21,33 +21,41 @@ import org.apache.poi.ss.util.CellRangeAddress;
 
 public class WeekendList
 {
+  private static final String PROPERTY_ASSIGN_ROOMS = "assignRooms";
+
   private final File inputListPath;
+  private final boolean assignRooms = Boolean.getBoolean(PROPERTY_ASSIGN_ROOMS);
   private String weekend;
   
   public static void main(String[] args) 
     throws IOException
   { 
     if (args.length != 1) {
-      System.err.printf("Invalid usage: %s <UpcomingWeekendRegistrationExport>.xls", WeekendList.class.getName());
+      System.err.printf("Invalid usage: %s <UpcomingWeekendRegistrationExport>.xls [-D%s=true/false]",
+              WeekendList.class.getName(), PROPERTY_ASSIGN_ROOMS);
       return;
     }
     
     String inputFileName = args[0];
     
-    new WeekendList(new File(inputFileName)).create();    
+    new WeekendList(new File(inputFileName)).create();
   }
   
   public WeekendList(File inputListPath) {
     this.inputListPath = inputListPath;
   }
   
-  public void create() throws IOException {
+  public File create() throws IOException {
     List<Couple> couples = createCouples(readFile(inputListPath));
-    
-    RoomAssignments ra = new RoomAssignments(couples);
-    ra.assignRooms();
-    
-    saveToFile(couples, getOutFile(inputListPath));
+
+    if (assignRooms) {
+      RoomAssignments ra = new RoomAssignments(couples);
+      ra.assignRooms();
+    }
+
+    File outputFile = getOutFile(inputListPath);
+    saveToFile(couples, outputFile);
+    return outputFile;
   }
   
   protected File getOutFile(File inFile) {
@@ -200,7 +208,7 @@ public class WeekendList
     setCellValue(sheet, row, col++, "Religion", csBold);
     setCellValue(sheet, row, col++, "Church/Priest", csBold);
     setCellValue(sheet, row, col++, "Dates", csBold);
-    setCellValue(sheet, row, col++, "Room", csBold);
+    if (assignRooms) setCellValue(sheet, row, col++, "Room", csBold);
     int maxCol = col;
     
     row++;
@@ -212,12 +220,12 @@ public class WeekendList
       col = setCellValue(sheet, row, 1, couple.woman, false);
       setCellValue(sheet, row, col++, couple.church);
       setCellValue(sheet, row, col++, couple.engagement);
-      setCellValue(sheet, row, col++, couple.getHerRoom());
+      if (assignRooms) setCellValue(sheet, row, col++, couple.getHerRoom());
       row++;
       col = setCellValue(sheet, row, 1, couple.man, false);
       setCellValue(sheet, row, col++, couple.priest);
       setCellValue(sheet, row, col++, couple.wedding);
-      setCellValue(sheet, row, col++, couple.getHisRoom());
+      if (assignRooms) setCellValue(sheet, row, col++, couple.getHisRoom());
       
       row += 2;
     }
