@@ -6,9 +6,9 @@
   <groupId>fmp.ee</groupId>
   <artifactId>eeWeekendList</artifactId>
   <packaging>jar</packaging>
-  <version>1.1</version>
+  <version>1.2</version>
   <name>eeWeekendList</name>
-  <url>http://maven.apache.org</url>
+  <url>https://github.com/fpedroza/ee-weekend-list</url>
 
   <build>
     <plugins>
@@ -22,39 +22,19 @@
         </configuration>
       </plugin>
 
-      <!-- Make this jar executable -->
       <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-jar-plugin</artifactId>
-        <version>2.5</version>
+        <artifactId>maven-assembly-plugin</artifactId>
         <configuration>
-          <!-- DO NOT include log4j.properties file in your Jar -->
-          <excludes>
-            <exclude>**/log4j.properties</exclude>
-          </excludes>
-          <archive>
-            <manifest>
-              <!-- Jar file entry point -->
-              <mainClass>fmp.ee.WeekendList</mainClass>
-              <addClasspath>true</addClasspath>
-              <classpathPrefix>dependency-jars/</classpathPrefix>
-            </manifest>
-          </archive>
-        </configuration>
-      </plugin>
-
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-shade-plugin</artifactId>
-        <version>2.3</version>
-        <configuration>
-          <!-- put your configurations here -->
+          <descriptors>
+            <descriptor>${basedir}/assembly.xml</descriptor>
+          </descriptors>
         </configuration>
         <executions>
           <execution>
+            <id>make-assembly</id>
             <phase>package</phase>
             <goals>
-              <goal>shade</goal>
+              <goal>single</goal>
             </goals>
           </execution>
         </executions>
